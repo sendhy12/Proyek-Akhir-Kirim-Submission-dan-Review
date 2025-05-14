@@ -184,14 +184,76 @@ Data yang telah diproses ini siap digunakan untuk melatih model **Collaborative 
 
 Tahapan ini membahas mengenai model sistem rekomendasi yang dibuat untuk menyelesaikan permasalahan dalam menemukan tempat wisata yang sesuai dengan preferensi pengguna serta meningkatkan visibilitas destinasi yang kurang populer. Proyek ini menyajikan **dua solusi rekomendasi** menggunakan **dua pendekatan algoritma yang berbeda**, yaitu:
 
+
 ### 1. Content-Based Filtering (CBF)
 
-Pendekatan ini merekomendasikan tempat wisata berdasarkan kemiripan **fitur konten**—dalam hal ini adalah **kategori tempat wisata**.
+Content-Based Filtering adalah pendekatan sistem rekomendasi yang merekomendasikan item (dalam hal ini **tempat wisata**) berdasarkan kemiripan kontennya. Dalam proyek ini, konten yang digunakan sebagai dasar kemiripan adalah **kategori dari tempat wisata**.
 
-#### Algoritma:
+#### Langkah-langkah dan Algoritma yang Digunakan:
 
-* **TF-IDF Vectorizer** digunakan untuk mengubah data kategori ke dalam representasi numerik.
-* **Cosine Similarity** digunakan untuk mengukur tingkat kemiripan antar tempat wisata berdasarkan hasil vektorisasi kategori.
+1. **TF-IDF Vectorizer**
+   Pertama, kategori dari masing-masing tempat wisata diubah ke dalam bentuk numerik menggunakan *TF-IDF (Term Frequency-Inverse Document Frequency)*. TF-IDF membantu dalam menilai seberapa penting sebuah kata (fitur kategori) dalam sebuah dokumen (tempat wisata), dibandingkan dengan seluruh dokumen.
+
+   ```python
+   # Inisialisasi TF-IDF Vectorizer
+   tfidf_vectorizer = TfidfVectorizer()
+
+   # Melakukan fit pada data kategori wisata
+   tfidf_vectorizer.fit(data['category'])
+
+   # Menampilkan nama-nama fitur (kategori wisata)
+   tfidf_vectorizer.get_feature_names_out()
+   ```
+
+2. **Transformasi Kategori ke Matriks TF-IDF**
+   Setelah fitur diekstraksi, data dikonversi menjadi matriks TF-IDF yang merepresentasikan setiap tempat wisata dalam bentuk vektor.
+
+   ```python
+   # Transformasi ke dalam bentuk matriks TF-IDF
+   tfidf_matrix = tfidf_vectorizer.fit_transform(data['category'])
+
+   # Ukuran matriks TF-IDF
+   tfidf_matrix.shape
+   ```
+
+3. **Visualisasi Matriks TF-IDF**
+   Untuk memudahkan interpretasi, matriks TF-IDF ditampilkan dalam bentuk DataFrame. Hal ini membantu dalam melihat fitur mana yang dominan dalam suatu tempat wisata.
+
+   ```python
+   # Cek representasi matriks dalam bentuk dense
+   tfidf_matrix.todense()
+
+   # Membuat DataFrame TF-IDF untuk interpretasi
+   pd.DataFrame(
+       tfidf_matrix.todense(),
+       columns=tfidf_vectorizer.get_feature_names_out(),
+       index=data.place_name
+   ).sample(5, axis=1).sample(10, axis=0)
+   ```
+
+4. **Mengukur Kemiripan Antar Tempat Wisata**
+   Setelah mendapatkan representasi vektor dari setiap tempat wisata, digunakan **cosine similarity** untuk mengukur seberapa mirip satu tempat wisata dengan tempat wisata lainnya berdasarkan kategorinya.
+
+   ```python
+   # Menghitung cosine similarity
+   cosine_sim = cosine_similarity(tfidf_matrix)
+   cosine_sim
+   ```
+
+5. **Membuat DataFrame Cosine Similarity**
+   Hasil perhitungan kemiripan disimpan dalam bentuk DataFrame agar dapat dengan mudah dilihat dan digunakan untuk menghasilkan rekomendasi.
+
+   ```python
+   # Membuat DataFrame cosine similarity
+   cosine_sim_df = pd.DataFrame(cosine_sim, index=data['place_name'], columns=data['place_name'])
+
+   print('Shape:', cosine_sim_df.shape)
+
+   # Menampilkan sebagian similarity matrix
+   cosine_sim_df.sample(5, axis=1).sample(10, axis=0)
+   ```
+
+Dengan pendekatan Content-Based Filtering ini, sistem dapat merekomendasikan tempat wisata yang memiliki kategori serupa dengan tempat yang disukai atau dikunjungi sebelumnya oleh pengguna. Proses ini sangat bergantung pada kualitas dan keberagaman fitur konten (dalam hal ini kategori wisata) yang tersedia dalam data.
 
 #### Output:
 
@@ -219,13 +281,101 @@ Sistem memberikan **top-5 rekomendasi tempat wisata** yang paling mirip dengan i
 
 ### 2. Collaborative Filtering (CF)
 
-Pendekatan ini memberikan rekomendasi berdasarkan **interaksi pengguna**, yaitu data rating tempat wisata. Model dibangun menggunakan pendekatan **Neural Network** dengan layer embedding untuk pengguna dan tempat wisata.
+Collaborative Filtering adalah pendekatan sistem rekomendasi yang memberikan saran berdasarkan **interaksi antar pengguna dan item**. Dalam konteks ini, item yang dimaksud adalah **tempat wisata**, dan interaksi pengguna diukur melalui data **rating** yang diberikan.
 
-#### Algoritma:
+Pendekatan ini tidak bergantung pada atribut konten dari tempat wisata, melainkan pada pola interaksi pengguna—misalnya, jika dua pengguna memberikan rating tinggi pada tempat yang sama, maka kemungkinan besar mereka memiliki preferensi yang serupa.
 
-* Model *Neural Collaborative Filtering* dibangun untuk mempelajari hubungan laten antara pengguna dan tempat wisata.
-* Data rating dinormalisasi dan dibagi menjadi data latih dan validasi.
-* Model dilatih menggunakan **Binary Crossentropy Loss** dan dioptimasi dengan **Adam Optimizer**.
+#### Pendekatan yang Digunakan: Neural Collaborative Filtering
+
+Untuk membangun sistem ini, digunakan model **Neural Network** berbasis *embedding layer*, yang dikenal sebagai **Neural Collaborative Filtering (NCF)**. Model ini bertujuan untuk mempelajari representasi laten (latent features) dari pengguna dan tempat wisata, serta memahami hubungan kompleks di antaranya.
+
+---
+
+#### Langkah-langkah dan Algoritma yang Digunakan:
+
+1. **Pengacakan dan Pemrosesan Data Awal**
+
+   Dataset rating pengguna diacak untuk menghindari bias urutan data. Kemudian, data fitur (`x`) diambil dari pasangan `user` dan `place`, sementara label target (`y`) adalah nilai rating yang telah dinormalisasi ke rentang 0 hingga 1.
+
+   ```python
+   # Mengacak dataset
+   rating = rating.sample(frac=1, random_state=42)
+
+   # Membuat variabel x untuk mencocokkan data user dan tempat wisata
+   x = rating[['user', 'place']].values
+
+   # Normalisasi rating
+   min_rating = rating['Place_Ratings'].min()
+   max_rating = rating['Place_Ratings'].max()
+   y = rating['Place_Ratings'].apply(lambda x: (x - min_rating) / (max_rating - min_rating)).values
+   ```
+
+2. **Pembagian Data Latih dan Validasi**
+
+   Data dibagi menjadi 80% data pelatihan dan 20% data validasi agar performa model dapat diuji secara adil di data yang belum pernah dilihat sebelumnya.
+
+   ```python
+   # Membagi menjadi 80% data train dan 20% data validasi
+   train_indices = int(0.8 * rating.shape[0])
+   x_train, x_val, y_train, y_val = (
+       x[:train_indices],
+       x[train_indices:],
+       y[:train_indices],
+       y[train_indices:]
+   )
+   ```
+
+3. **Membangun Arsitektur Model**
+
+   Model `RecommenderNet` dibangun menggunakan TensorFlow Keras. Model ini terdiri dari:
+
+   * Embedding layer untuk merepresentasikan pengguna dan tempat wisata ke dalam vektor berdimensi tetap.
+   * Bias embeddings untuk masing-masing pengguna dan tempat wisata.
+   * Operasi dot product untuk mengukur kecocokan antar pengguna dan tempat.
+   * Aktivasi sigmoid untuk mengoutput skor prediksi antara 0 dan 1 (dalam konteks rating ter-normalisasi).
+
+   ```python
+   class RecommenderNet(tf.keras.Model):
+       def __init__(self, num_users, num_places, embedding_size, **kwargs):
+           ...
+       def call(self, inputs):
+           ...
+           return tf.nn.sigmoid(x)
+   ```
+
+4. **Inisialisasi dan Kompilasi Model**
+
+   Model diinisialisasi dengan jumlah pengguna dan tempat wisata yang telah dikodekan. Model kemudian dikompilasi menggunakan:
+
+   * **Binary Crossentropy Loss**, karena output berada dalam skala 0-1.
+   * **Adam Optimizer** dengan *learning rate* 0.001.
+   * **Root Mean Squared Error (RMSE)** sebagai metrik evaluasi.
+
+   ```python
+   model.compile(
+       loss=tf.keras.losses.BinaryCrossentropy(),
+       optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+       metrics=[tf.keras.metrics.RootMeanSquaredError()]
+   )
+   ```
+
+5. **Pelatihan Model**
+
+   Model dilatih selama 100 *epoch* dengan batch size 8, menggunakan data latih dan divalidasi dengan data validasi yang telah dipisahkan sebelumnya.
+
+   ```python
+   history = model.fit(
+       x=x_train,
+       y=y_train,
+       batch_size=8,
+       epochs=100,
+       validation_data=(x_val, y_val)
+   )
+   ```
+
+---
+
+Dengan pendekatan Collaborative Filtering berbasis Neural Network ini, sistem dapat merekomendasikan tempat wisata berdasarkan pola rating dari pengguna lain yang memiliki preferensi serupa. Model ini mampu menangkap hubungan kompleks yang mungkin tidak dapat ditangkap oleh metode tradisional, berkat kemampuan pembelajaran representasi laten melalui embedding.
 
 #### Output:
 
