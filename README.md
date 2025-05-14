@@ -78,7 +78,7 @@ Dataset terdiri dari beberapa file utama:
 
 * **Jumlah data**: 437 entri.
 
-### 📌 Variabel pada `tourism_rating.csv`:
+### Variabel pada `tourism_rating.csv`:
 
 | Kolom           | Deskripsi                                         |
 | --------------- | ------------------------------------------------- |
@@ -90,27 +90,27 @@ Dataset terdiri dari beberapa file utama:
 
 ---
 
-## 🔎 Exploratory Data Analysis (EDA)
+## Exploratory Data Analysis (EDA)
 
 Pada tahap ini dilakukan eksplorasi awal terhadap data untuk memahami karakteristik dasar yang dapat mendukung proses pemodelan sistem rekomendasi.
 
-### 📌 Statistik Deskriptif Rating
+### Statistik Deskriptif Rating
 
 > Rata-rata rating berada di kisaran 3, menunjukkan bahwa sebagian besar pengguna cenderung memberikan penilaian netral terhadap tempat wisata yang mereka kunjungi.
 
-### 📊 Distribusi Rating
+### Distribusi Rating
 
 > Sebagian besar nilai rating berkisar antara 3,5 hingga 4, mengindikasikan preferensi pengguna yang dominan terhadap tempat-tempat yang mereka sukai atau anggap layak direkomendasikan.
 
-### 👥 Statistik Pengguna dan Tempat Wisata
+### Statistik Pengguna dan Tempat Wisata
 
 > Terdapat banyak pengguna dan tempat wisata unik, memungkinkan penerapan metode **collaborative filtering** karena adanya interaksi user-item yang cukup beragam.
 
-### 🗺️ Informasi Kategori Tempat Wisata
+### Informasi Kategori Tempat Wisata
 
 > Tempat wisata diklasifikasikan ke dalam beberapa kategori seperti **Budaya**, **Taman Hiburan**, **Cagar Alam**, **Bahari**, **Pusat Perbelanjaan**, dan **Tempat Ibadah**, yang dapat dimanfaatkan dalam pendekatan **content-based filtering**.
 
-### 📂 Distribusi Kategori Tempat Wisata
+### Distribusi Kategori Tempat Wisata
 
 > Kategori tempat wisata paling dominan adalah kategori **Taman Hiburan**, yang menunjukkan tingginya ketertarikan atau jumlah tempat wisata bertema taman hiburan dalam dataset.
 
@@ -231,13 +231,13 @@ Pendekatan ini memberikan rekomendasi berdasarkan **interaksi pengguna**, yaitu 
 
 Sistem menghasilkan **top-10 rekomendasi** berdasarkan prediksi rating tertinggi terhadap tempat wisata yang belum dikunjungi oleh pengguna tertentu.
 
-### 🎯 User ID Terpilih: `69`
+### User ID Terpilih: `69`
 
 **Jumlah tempat yang telah dikunjungi:** 24
 
 ---
 
-### 🌟 Tempat dengan **Rating Tinggi** oleh User:
+### Tempat dengan **Rating Tinggi** oleh User:
 
 | Nama Tempat                             | Kategori      |
 | --------------------------------------- | ------------- |
@@ -249,7 +249,7 @@ Sistem menghasilkan **top-10 rekomendasi** berdasarkan prediksi rating tertinggi
 
 ---
 
-### 🔮 **Top 10 Rekomendasi Tempat Wisata** untuk User 69:
+### **Top 10 Rekomendasi Tempat Wisata** untuk User 69:
 
 | Rekomendasi Ke | Nama Tempat                                  | Kategori      |
 | -------------- | -------------------------------------------- | ------------- |
